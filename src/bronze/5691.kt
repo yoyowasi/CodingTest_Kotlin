@@ -9,5 +9,12 @@ package bronze
 // - 출력 | 각 테스트 케이스에 대한 정답을 한 줄에 하나씩 출력한다.
 
 fun main() {
+    while (true) {
+        val input = readlnOrNull() ?: break
+        val (A, B) = input.split(" ").map { it.toInt() }
 
+        if (A == 0 && B == 0) break
+
+        println(2 * A - B)
+    }
 }
