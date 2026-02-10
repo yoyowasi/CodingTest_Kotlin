@@ -13,55 +13,86 @@ import java.io.InputStreamReader
 
 fun main() {
     val br = BufferedReader(InputStreamReader(System.`in`))
-//    공백기준으로 n, m, v 의 값을 받음
+
+    // 공백 기준으로 잘라서 n(정점), m(간선), v(시작점) 값을 받음
     val (n, m, v) = br.readLine().split(" ").map(String::toInt)
-//    사이즈가 n + 1 이고 배열 [0]은 버리고 1부터 쓰기 위해서
+
+    // [중요] 정점 번호가 1번부터 시작하므로, 인덱스를 맞추기 위해 크기를 n + 1로 설정 (0번 인덱스는 버림)
     val graph = Array(n + 1) { mutableListOf<Int>() }
-//      m만큼 반복하고 숫자 ab 를 받아서 양쪽에 넣어줌
+
+    // m번 반복하면서 간선 정보(a, b)를 받아서 양쪽 리스트에 모두 추가 (양방향 그래프니까!)
     repeat(m) {
         val (a, b) = br.readLine().split(" ").map(String::toInt)
         graph[a].add(b)
         graph[b].add(a)
     }
+
+    // [문제 조건] 방문할 수 있는 정점이 여러 개면 "작은 번호"부터 가야 하므로 정렬 필수
     graph.forEach { it.sort() }
 
+    // 방문 여부를 체크할 배열 (True: 방문함, False: 아직 안 감)
     val dfsVisited = BooleanArray(n + 1)
     val bfsVisited = BooleanArray(n + 1)
 
+    // 방문한 정점 번호를 순서대로 "기록"할 리스트 (결과 출력용)
     val dfsResult = mutableListOf<Int>()
     val bfsResult = mutableListOf<Int>()
 
+    // DFS 함수 (재귀 구조)
     fun dfs(cur: Int) {
+        // 현재 위치(cur) 방문 처리 (도장 쾅!)
         dfsVisited[cur] = true
+
+        // [수정] cur 값을 더하는 게 아니라, 결과 리스트에 '추가'하는 것
         dfsResult += cur
+
+        // 현재 정점(cur)과 연결된 친구들(next)을 하나씩 확인
         for (next in graph[cur]) {
+            // [수정] 0이 아니라면(X) -> 아직 방문하지 않았다면(False라면) (O)
             if (!dfsVisited[next]) {
+                // 더 깊이 들어간다 (재귀 호출)
                 dfs(next)
             }
         }
     }
 
+    // BFS 함수 (큐 구조)
     fun bfs(start: Int) {
+        // 대기열(큐) 생성
         val q = ArrayDeque<Int>()
 
+        // [수정] 큐에 시작점을 '넣음' (더하기 아님)
         q += start
+
+        // 시작점 방문 처리
         bfsVisited[start] = true
 
+        // 큐에 대기 중인 정점이 있는 동안 계속 반복
         while (q.isNotEmpty()) {
+            // [수정] 큐의 맨 앞(First) 값을 꺼내옴 (삭제하면서 가져옴)
             val cur = q.removeFirst()
+
+            // [수정] 결과 리스트에 꺼내온 정점을 '추가' (삭제 아님)
             bfsResult += cur
+
+            // 현재 정점(cur)과 연결된 친구들 확인
             for (next in graph[cur]) {
+                // [수정] 아직 방문하지 않았다면 (False라면)
                 if (!bfsVisited[next]) {
+                    // 큐에 넣을 때 미리 방문 처리 (중복 방지)
                     bfsVisited[next] = true
+                    // 큐에 줄 세우기 (추가)
                     q += next
                 }
             }
         }
     }
 
+    // 탐색 시작
     dfs(v)
     bfs(v)
 
+    // 리스트에 담긴 정점들을 공백으로 연결해서 예쁘게 출력
     println(dfsResult.joinToString(" "))
     println(bfsResult.joinToString(" "))
 }
