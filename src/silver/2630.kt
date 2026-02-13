@@ -2,7 +2,8 @@ package silver
 
 import java.util.StringTokenizer
 
-// - 문제 | 아래 <그림 1>과 같이 여러개의 정사각형칸들로 이루어진 정사각형 모양의 종이가 주어져 있고, 각 정사각형들은 하얀색으로 칠해져 있거나 파란색으로 칠해져 있다. 주어진 종이를 일정한 규칙에 따라 잘라서 다양한 크기를 가진 정사각형 모양의 하얀색 또는 파란색 색종이를 만들려고 한다.
+// - 문제 | 아래 <그림 1>과 같이 여러개의 정사각형칸들로 이루어진 정사각형 모양의 종이가 주어져 있고, 각 정사각형들은 하얀색으로 칠해져 있거나 파란색으로 칠해져 있다.
+//          주어진 종이를 일정한 규칙에 따라 잘라서 다양한 크기를 가진 정사각형 모양의 하얀색 또는 파란색 색종이를 만들려고 한다.
 //          전체 종이의 크기가 N×N(N=2k, k는 1 이상 7 이하의 자연수) 이라면 종이를 자르는 규칙은 다음과 같다.
 //          전체 종이가 모두 같은 색으로 칠해져 있지 않으면 가로와 세로로 중간 부분을 잘라서 <그림 2>의 I, II, III, IV와 같이 똑같은 크기의 네 개의 N/2 × N/2색종이로 나눈다.
 //           나누어진 종이 I, II, III, IV 각각에 대해서도 앞에서와 마찬가지로 모두 같은 색으로 칠해져 있지 않으면 같은 방법으로 똑같은 크기의 네 개의 색종이로 나눈다.
@@ -17,91 +18,66 @@ import java.util.StringTokenizer
 
 // - 출력 | 첫째 줄에는 잘라진 햐얀색 색종이의 개수를 출력하고, 둘째 줄에는 파란색 색종이의 개수를 출력한다.
 
-
-// [전역 변수] 재귀 함수 안에서도 편하게 쓰기 위해 함수 밖에 선언했어.
-var white = 0 // 하얀색 색종이 개수 저장
-var blue = 0  // 파란색 색종이 개수 저장
-lateinit var paper: Array<IntArray> // 종이 그림(0, 1)을 저장할 2차원 배열
+// 재귀함수를 사용하기 위해서 전역번수에 흰색 파란색 선언
+// 종이의 사이즈 2차원배열도 미리 선언이지만 lateinit을 사용해서 나중에 초기화를 받도록 함
+var white = 0
+var blue = 0
+lateinit var paper: Array<IntArray>
 
 fun main() {
-    // 1. 빠른 입력을 위해 BufferedReader 사용
+//    빠른 입력을 위한 버퍼리더
     val br = System.`in`.bufferedReader()
-
-    // 첫 줄: 종이의 한 변의 길이 N 입력 받기
+//    전체 종이의 한변의 길이인 N을 받는다
     val N = br.readLine().toInt()
-
-    // 2. 종이 배열 초기화 (N x N 크기)
+//     정사각형이니 종이의 사이는 N * N 을 한다
     paper = Array(N) { IntArray(N) }
-
-    // 3. 종이 정보 입력 받기 (이중 반복문 대신, 한 줄씩 읽어서 채우기)
+//      종이의 배열을 끝까지 돌기위해 이중 for문을 사용하는데 주어진 숫자를 받아서 바로 배열에 넣어준다
     for (i in 0 until N) {
-        // 공백으로 구분된 숫자들을 효율적으로 자르기 위해 StringTokenizer 사용
         val st = StringTokenizer(br.readLine())
         for (j in 0 until N) {
-            paper[i][j] = st.nextToken().toInt() // 0 또는 1 저장
+            paper[i][j] = st.nextToken().toInt()
         }
     }
-
-    // 4. 분할 정복 시작! (가장 큰 종이 전체부터 시작하니까 0, 0, N)
+//    파티션이라는 함수에 0,0, N이라는 값을 넣어준다
     partition(0, 0, N)
-
-    // 5. 정답 출력
+//      흰색과 파란색을 출력한다
     println(white)
     println(blue)
 }
-
-/**
- * 분할 정복을 수행하는 재귀 함수
- * @param row : 현재 종이의 시작 행(세로) 인덱스
- * @param col : 현재 종이의 시작 열(가로) 인덱스
- * @param size : 현재 종이의 한 변의 길이
- */
+//      함수 파티션을 정의하고 row 와 col 와 size를 선언하고 타입을 지정하여 준다
 fun partition(row: Int, col: Int, size: Int) {
-
-    // [1단계: 검사] 현재 자른 종이가 모두 같은 색인지 확인
+//      checkColor라는 함수를 호출을 한다
     if (checkColor(row, col, size)) {
-        // [성공 - Base Case]
-        // 모두 같은 색이라면 더 이상 자를 필요 없음!
-        // 해당 색깔의 카운트를 1 올리고 함수 종료 (return)
         if (paper[row][col] == 0) {
-            white++ // 0이면 하얀색
+            white++
         } else {
-            blue++  // 1이면 파란색
+            blue++
         }
+//        리턴해줘서 함수 끝
         return
     }
-
-    // [2단계: 분할] 색이 섞여 있다면? 4등분 해야 함!
-    val newSize = size / 2 // 길이를 절반으로 줄임
-
-    // [3단계: 재귀 호출] 4개의 작은 사각형으로 나누어 다시 검사
-    // 1사분면 (왼쪽 위)
+// 새로운 사이즈를 선언해준다 이것은 size / 2 한 값이다
+    val newSize = size / 2
+//    파티션으로 다시 재귀함수를 돌린다
     partition(row, col, newSize)
-    // 2사분면 (오른쪽 위) -> 가로(col)로 newSize만큼 이동
     partition(row, col + newSize, newSize)
-    // 3사분면 (왼쪽 아래) -> 세로(row)로 newSize만큼 이동
     partition(row + newSize, col, newSize)
-    // 4사분면 (오른쪽 아래) -> 가로, 세로 둘 다 이동
     partition(row + newSize, col + newSize, newSize)
 }
-
-/**
- * 현재 영역이 모두 같은 색인지 확인하는 함수
- * @return true: 모두 같은 색, false: 섞여 있음
- */
+//      색상을 확인하는 함수를 선언해준다 반환값은 Bool이다
 fun checkColor(row: Int, col: Int, size: Int): Boolean {
-    // 기준 색깔: 해당 영역의 가장 첫 번째 칸 (왼쪽 위)의 색
+//    color는 종이의 row col 배열안에있는 값이다
     val color = paper[row][col]
-
-    // 영역 전체를 순회하면서 다른 색이 있는지 검사
+//      i를 row 부터 row + size -1 까지 반복을 한다
     for (i in row until row + size) {
+//        j를 col 부터 row + size -1 까지 반복을 한다
         for (j in col until col + size) {
-            // 하나라도 기준 색과 다른 색이 나오면 즉시 실패(false) 리턴
+//            만약 종이의 배열의 값이 color가 아닐경우 false를 반환한다
             if (paper[i][j] != color) {
                 return false
             }
         }
     }
-    // 반복문을 무사히 통과했다면 모두 같은 색이라는 뜻!
+//    아니라면 true를 반환한다
     return true
 }
